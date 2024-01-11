@@ -1,8 +1,0 @@
-{
-    "makefile.makefilePath": "",
-    "files.associations": {
-        "*.adb": "ada",
-        "*.c": "c",
-        "netdb.h": "c"
-    }
-}
