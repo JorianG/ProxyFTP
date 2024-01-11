@@ -40,3 +40,7 @@ secrets.json
 # Ignore generated files
 *.min.js
 *.min.css
+
+# Jetbrains file
+.cmake-build-debug/
+./CMakelists.txt
