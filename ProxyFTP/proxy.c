@@ -34,8 +34,14 @@ void main(){
     struct sockaddr_storage infoClient;     // Informations sur la connexion de RDV
     struct sockaddr_storage infoSockRDV;    // Informations sur le client connecté
     
-    socklen_t len;                      // Variable utilisée pour stocker les longueurs des structures de socket
-				                     
+    socklen_t len;  
+    
+    /*
+    cree un socket de DATA entre le serveur et le proxy
+    */ 
+    int connect(){
+
+    }			                     
         
     
     // Initialisation de la socket de RDV IPv4/TCP
@@ -205,120 +211,166 @@ void traitement(int descSockRDV , int descSockCOM ){
     if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
 
 
-    // récupére l'adresse et port du client 
-    ecode = read(descSockCOM, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    buffer[ecode] = '\0';
-    printf("CLIENT : %s" ,buffer);
-   
-    
-   //crée le serveur de data client 
-    int n1, n2, n3, n4, n5, n6;
-    char adresseClient[25];
-    char portClient[10];
-
-    sscanf(buffer, "PORT %d,%d,%d,%d,%d,%d" , &n1, &n2, &n3, &n4, &n5, &n6);
-    sprintf( adresseClient, "%d.%d.%d.%d" , n1 , n2 , n3 , n4);
-    sprintf(portClient , "%d", n5 * 256 + n6);
-
-    ecode = connect2Server(adresseClient ,portClient , &sockClientData );
-
-    //passage en mode passive
-    
-    ecode = write(sockServeur, "PASV\r\n",strlen("PASV\r\n"));
-    if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
-
-    ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    buffer[ecode] = '\0';
-    printf("\n");
-    printf("SERVER : %s", buffer);
-
-    //crée le serveur data cote serveur message : 227
-    char adresseServeur [25];
-    char portServeur [10];
-    printf("%s",buffer);
-    sscanf(buffer, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)" , &n1, &n2, &n3, &n4, &n5, &n6);
-    sprintf( adresseServeur, "%d.%d.%d.%d" , n1 , n2 , n3 , n4);
-    sprintf(portServeur , "%d", n5 * 256 + n6);
-
-    ecode = connect2Server(adresseServeur ,portServeur , &sockServeurData );
-   
-    ecode = write(descSockCOM , "220\n" ,strlen("220\n"));
-    if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
-
-    //Lecture de la commande ls du client  message : LIST
-    ecode = read(descSockCOM, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    buffer[ecode] = '\0';
-    printf("\n");
-    printf("CLIENT COMMAND : %s\n" ,buffer);
-
-    ecode = write(sockServeur, "LIST\r\n", strlen("LIST\r\n"));
-    if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
 
 
-    // 150 opening ascii 
-    ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    buffer[ecode] = '\0';
-    printf("SERVER : %s\n" ,buffer);
+    while(true){
+        ecode = read(descSockCOM, buffer , MAXBUFFERLEN-1);
+        if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
+        buffer[ecode] = '\0';
+        printf("\n");
+        printf("CLIENT COMMAND : %s\n" ,buffer);
+        if(strncmp(buffer, "PORT", 4) == 0){
+                
+                //crée le serveur de data client 
+                int n1, n2, n3, n4, n5, n6;
+                char adresseClient[25];
+                char portClient[10];
+                sscanf(buffer, "PORT %d,%d,%d,%d,%d,%d" , &n1, &n2, &n3, &n4, &n5, &n6);
+                sprintf( adresseClient, "%d.%d.%d.%d" , n1 , n2 , n3 , n4);
+                sprintf(portClient , "%d", n5 * 256 + n6);
+                ecode = connect2Server(adresseClient ,portClient , &sockClientData );
+
+                //passage en mode passive
+                ecode = write(sockServeur, "PASV\r\n",strlen("PASV\r\n"));
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
 
 
-    ecode = write(descSockCOM , buffer ,strlen(buffer));
-    if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
-    bzero(buffer , MAXBUFFERLEN -1 );
+                ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
+                if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
+                buffer[ecode] = '\0';
+                printf("\n");
+                printf("SERVER : %s", buffer);
 
-    // permet d'afficher tous le résultat de la commande ls 
+                //crée le serveur data cote serveur message : 227
+                char adresseServeur [25];
+                char portServeur [10];
+                printf("%s",buffer);
+                sscanf(buffer, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)" , &n1, &n2, &n3, &n4, &n5, &n6);
+                sprintf( adresseServeur, "%d.%d.%d.%d" , n1 , n2 , n3 , n4);
+                sprintf(portServeur , "%d", n5 * 256 + n6);
 
-    printf("----------------------------LS------------------------------\n");
-        do {                                                                    
-            ecode = read(sockServeurData, buffer , MAXBUFFERLEN-1);
-            if (ecode == -1 ) {perror("erreur de de lecture"); exit(1);}               
-            if (ecode <= 0 ) { break;}                                          
-            printf("%s",buffer);
-            ecode = write(sockClientData , buffer , strlen(buffer));
-            if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
-            bzero(buffer , MAXBUFFERLEN -1 );
+                ecode = connect2Server(adresseServeur ,portServeur , &sockServeurData );
+                if (ecode == -1 ) {perror("erreur de creation de la connexion"); exit(1);}
+
+                ecode = write(descSockCOM , "220 connected OK\n" ,strlen("220 connected OK\n"));
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
+
+                printf("Socket Data OK ; addr : %s @ %s", adresseServeur, portServeur);
+
+        }else if(strncmp(buffer, "LPRT", 4) == 0){
+            //crée le serveur de data client 
+                int n1, n2, n3, n4, n5, n6;
+                char adresseClient[25];
+                char portClient[10];
+                sscanf(buffer, "PORT %d,%d,%d,%d,%d,%d" , &n1, &n2, &n3, &n4, &n5, &n6);
+                sprintf( adresseClient, "%d.%d.%d.%d" , n1 , n2 , n3 , n4);
+                sprintf(portClient , "%d", n5 * 256 + n6);
+                ecode = connect2Server(adresseClient ,portClient , &sockClientData );
+
+                //passage en mode passive
+                ecode = write(sockServeur, "PASV\r\n",strlen("PASV\r\n"));
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
+
+
+                ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
+                if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
+                buffer[ecode] = '\0';
+                printf("\n");
+                printf("SERVER : %s", buffer);
+
+                //crée le serveur data cote serveur message : 227
+                char adresseServeur [25];
+                char portServeur [10];
+                printf("%s",buffer);
+                sscanf(buffer, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)" , &n1, &n2, &n3, &n4, &n5, &n6);
+                sprintf( adresseServeur, "%d.%d.%d.%d" , n1 , n2 , n3 , n4);
+                sprintf(portServeur , "%d", n5 * 256 + n6);
+
+                ecode = connect2Server(adresseServeur ,portServeur , &sockServeurData );
+                if (ecode == -1 ) {perror("erreur de creation de la connexion"); exit(1);}
+
+                ecode = write(descSockCOM , "220 connected OK\n" ,strlen("220 connected OK\n"));
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
+
+                printf("Socket Data OK ; addr : %s @ %s", adresseServeur, portServeur);
+        
+        }else if(strncmp(buffer, "LIST", 4) == 0){
+               
+
+                ecode = write(sockServeur, "LIST\r\n", strlen("LIST\r\n"));
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
+
+
+                // 150 opening ascii 
+                ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
+                if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
+                buffer[ecode] = '\0';
+                printf("SERVER : %s\n" ,buffer);
+
+
+                ecode = write(descSockCOM , buffer ,strlen(buffer));
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
+                bzero(buffer , MAXBUFFERLEN -1 );
+
+                // permet d'afficher tous le résultat de la commande ls 
+
+                printf("----------------------------LS------------------------------\n");
+                    do {
+                        //affichade cote client des retour de la commande LIST                                                                    
+                        ecode = read(sockServeurData, buffer , MAXBUFFERLEN-1);
+                        if (ecode == -1 ) {perror("erreur de de lecture"); exit(1);}               
+                        if (ecode <= 0 ) { break;}                                          
+                        printf("%s",buffer);
+                        ecode = write(sockClientData , buffer , strlen(buffer));
+                        if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
+                        bzero(buffer , MAXBUFFERLEN -1 );
+                        
+                    } while (ecode > 0 );
+
+                close(sockServeurData);
+                close(sockClientData);
+
+                
+                printf("-------------------------------------------------------------\n");
+
+                bzero(buffer , MAXBUFFERLEN -1 );
+
+                //Transfert termine : 226 
+                ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
+                if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
+                buffer[ecode] = '\0';
+                printf("LS COMMAND : %s\n" , buffer);
+
+                ecode = write(descSockCOM , buffer , MAXBUFFERLEN-1);
+                if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);};
+
             
-        } while (ecode > 0 );
+        }else if(strncmp(buffer, "QUIT", 4) == 0){
+            
+            //QUIT -> Serveur
+            ecode = write(sockServeur , buffer , MAXBUFFERLEN-1);
+            if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
 
-    close(sockServeurData);
-    close(sockClientData);
+            //serveur -> "221 Goodbye." proxySockServeur
+            ecode = read( sockServeur, buffer , MAXBUFFERLEN-1);
+            if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
+            printf("221 connexion terminée !\n");
+            
+            //proxy -> "221 Goodbye." affichage client
+            ecode = write(descSockCOM , buffer , MAXBUFFERLEN-1);
+            
+
+            //Fermeture de la connexion
+            close(descSockCOM);
+            close(descSockRDV);
+
+            break;
+        }
+    }
+ 
 
     
-    printf("-------------------------------------------------------------\n");
-
-    bzero(buffer , MAXBUFFERLEN -1 );
-
-    //récupération du nombre de fichier tranféré message : 226 
-    ecode = read(sockServeur, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    buffer[ecode] = '\0';
-    printf("LS COMMAND : %s\n" , buffer);
-
-    ecode = write(descSockCOM , buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
-
     // fermeture du client 
 
-    ecode = read(descSockCOM, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    buffer[ecode] = '\0';
-    printf("CLIENT : %s\n" , buffer);
-
-    ecode = write(sockServeur , buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de d'écriture"); exit(1);}
-
-    // envoie du message de fermeture : 221
-    ecode = read( sockServeur, buffer , MAXBUFFERLEN-1);
-    if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
-    printf("221 connexion terminée !\n");
     
-    ecode = write(descSockCOM , buffer , MAXBUFFERLEN-1);
-    
-
-    //Fermeture de la connexion
-    close(descSockCOM);
-    close(descSockRDV);
 }
