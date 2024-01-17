@@ -11,7 +11,7 @@
 #define SERVADDR "127.0.0.1"            // Définition de l'adresse IP d'écoute
 #define SERVPORT "0"                    // Définition du port d'écoute, si 0 port choisi dynamiquement
 #define LISTENLEN 1                     // Taille de la file des demandes de connexion
-#define MAXBUFFERLEN 1024               // Taille du tampon pour les échanges de données
+#define MAXBUFFERLEN 2048               // Taille du tampon pour les échanges de données
 #define MAXHOSTLEN 64                   // Taille d'un nom de machine
 #define MAXPORTLEN 64                   // Taille d'un numéro de port
 
@@ -232,7 +232,7 @@ void traitement(int descSockRDV , int descSockCOM ){
     if (ecode == -1 ) {perror("erreur de lecture"); exit(1);}
     buffer[ecode] = '\0';
     printf("\n");
-    printf("SERVER : ");
+    printf("SERVER : %s", buffer);
 
     //crée le serveur data cote serveur message : 227
     char adresseServeur [25];
